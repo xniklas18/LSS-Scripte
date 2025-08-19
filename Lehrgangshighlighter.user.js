@@ -48,9 +48,10 @@
                 if (option.value && option.textContent) {
                     const optionText = normalizeText(option.textContent);
                     const mainTitle = normalizeText(extractMainTitle(optionText));
-                    const isNotRunning = notRunningTitles.some(title =>
-                        normalizeText(title) === mainTitle
-                    );
+                    const isNotRunning = notRunningTitles.some(title => {
+                        const normalizedTitle = normalizeText(title);
+                        return normalizedTitle === mainTitle || mainTitle.endsWith(normalizedTitle);
+                    });
                     if (isNotRunning) {
                         option.style.backgroundColor = '#ADD8E6';
                         option.style.color = '#000';
