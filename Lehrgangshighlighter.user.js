@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lehrgangshighlighter
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Hebt bereits geöffnete Lehrgänge farblich hervor.
 // @author       xniklas18
 // @match        https://www.leitstellenspiel.de/*
