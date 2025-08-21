@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Lehrgangshighlighter
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.5
 // @description  Hebt bereits geöffnete Lehrgänge farblich hervor.
 // @author       xniklas18
 // @match        https://www.leitstellenspiel.de/*
@@ -29,6 +29,9 @@
         });
     }
     function normalizeTitle(title) {
+        if (!title || typeof title !== 'string') {
+            return '';
+        }
         return title.replace(/^(Feuerwehr|Polizei|Rettungsdienst|THW|SEG) - /, '').trim().normalize('NFC');
     }
     function normalizeText(text) {
@@ -41,19 +44,36 @@
         const educationSelect = document.getElementById('education_select');
         if (!educationSelect) return;
         fetchRunningSchoolings().then(runningSchoolings => {
-            const notRunningTitles = runningSchoolings
-                .filter(schooling => schooling.running === false)
-                .map(schooling => normalizeTitle(schooling.education_title));
+            const notRunningCounts = {};
+            runningSchoolings.forEach(schooling => {
+                if (!schooling.education_title) return;
+                if (schooling.running === false) {
+                    const normalizedTitle = normalizeTitle(schooling.education_title);
+                    if (normalizedTitle) {
+                        notRunningCounts[normalizedTitle] = (notRunningCounts[normalizedTitle] || 0) + 1;
+                    }
+                }
+            });
             Array.from(educationSelect.options).forEach(option => {
                 if (option.value && option.textContent) {
-                    const optionText = normalizeText(option.textContent);
+                    const originalText = option.textContent.trim();
+                    if (option.textContent.includes(' [')) return;
+                    const optionText = normalizeText(originalText);
                     const mainTitle = normalizeText(extractMainTitle(optionText));
-                    const isNotRunning = notRunningTitles.some(title => {
+                    const matchingTitle = Object.keys(notRunningCounts).find(title => {
                         const normalizedTitle = normalizeText(title);
                         return normalizedTitle === mainTitle || mainTitle.endsWith(normalizedTitle);
                     });
-                    if (isNotRunning) {
-                        option.style.backgroundColor = '#ADD8E6';
+                    const count = matchingTitle ? notRunningCounts[matchingTitle] : 0;
+                    option.textContent = `${originalText} [${count}]`;
+                    if (count === 0) {
+                        option.style.backgroundColor = '#FFB6C1';
+                        option.style.color = '#000';
+                    } else if (count === 1) {
+                        option.style.backgroundColor = '#FFF8DC';
+                        option.style.color = '#000';
+                    } else {
+                        option.style.backgroundColor = '#C8E6C9';
                         option.style.color = '#000';
                     }
                 }
